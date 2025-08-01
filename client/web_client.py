@@ -158,7 +158,7 @@ class STTWebClient:
             
             document.getElementById('result').textContent = '변환 중...';
             
-            fetch('http://localhost:7920/transcribe', {
+            fetch('http://localhost:7920/api/v1/transcribe', {
                 method: 'POST',
                 body: formData
             })
