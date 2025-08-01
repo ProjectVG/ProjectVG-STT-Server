@@ -4,10 +4,16 @@ STT Service
 import os
 import shutil
 from typing import Dict, Any, Optional
-from fastapi import UploadFile, HTTPException
+from fastapi import UploadFile
 from faster_whisper import WhisperModel
 from src.core.config import settings
 from src.utils.logger import get_logger
+from src.utils.exceptions import (
+    ModelNotLoadedException, FileValidationException, 
+    TranscriptionException, FileProcessingException
+)
+from src.utils.error_messages import get_error_message
+from src.utils.log_messages import get_log_message
 
 logger = get_logger(__name__)
 
@@ -21,20 +27,20 @@ class STTService:
     def load_model(self) -> None:
         """Load FastWhisper model"""
         try:
-            logger.info(f"Loading FastWhisper model: {settings.WHISPER_MODEL}")
+            logger.info(get_log_message("SERVICE", "MODEL_LOADING", model=settings.WHISPER_MODEL))
             self.model = WhisperModel(
                 model_size_or_path=settings.WHISPER_MODEL,
                 device=settings.WHISPER_DEVICE,
                 compute_type=settings.WHISPER_COMPUTE_TYPE
             )
             self._is_loaded = True
-            logger.info("FastWhisper model loaded successfully")
+            logger.info(get_log_message("SERVICE", "MODEL_LOADED"))
         except ImportError:
-            logger.error("faster-whisper package is not installed")
-            raise RuntimeError("faster-whisper package is not installed")
+            logger.error(get_log_message("SERVICE", "MODEL_LOAD_FAILED", error="faster-whisper 패키지 미설치"))
+            raise ModelNotLoadedException(get_error_message("MODEL", "MODEL_PACKAGE_MISSING"))
         except Exception as e:
-            logger.error(f"Failed to load model: {e}")
-            raise RuntimeError(f"Failed to load model: {e}")
+            logger.error(get_log_message("SERVICE", "MODEL_LOAD_FAILED", error=str(e)))
+            raise ModelNotLoadedException(get_error_message("MODEL", "MODEL_LOAD_FAILED"))
     
     def is_model_loaded(self) -> bool:
         """Check if model is loaded"""
@@ -43,24 +49,24 @@ class STTService:
     def validate_file(self, file: UploadFile) -> None:
         """Validate uploaded file"""
         if not file:
-            raise HTTPException(status_code=400, detail="파일이 없습니다.")
+            raise FileValidationException(get_error_message("FILE", "FILE_NOT_FOUND"))
         
         if file.filename == "":
-            raise HTTPException(status_code=400, detail="파일이 선택되지 않았습니다.")
+            raise FileValidationException(get_error_message("FILE", "FILE_NOT_SELECTED"))
         
         # Check file extension
         file_ext = os.path.splitext(file.filename)[1].lower()
         if file_ext not in settings.ALLOWED_EXTENSIONS:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"지원하지 않는 파일 형식입니다. 지원 형식: {', '.join(settings.ALLOWED_EXTENSIONS)}"
+            supported_formats = ', '.join(settings.ALLOWED_EXTENSIONS)
+            raise FileValidationException(
+                get_error_message("FILE", "INVALID_FILE_TYPE", formats=supported_formats)
             )
         
         # Check file size (if available)
         if hasattr(file, 'size') and file.size and file.size > settings.MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=400,
-                detail=f"파일 크기가 너무 큽니다. 최대 크기: {settings.MAX_FILE_SIZE // (1024*1024)}MB"
+            max_size_mb = settings.MAX_FILE_SIZE // (1024*1024)
+            raise FileValidationException(
+                get_error_message("FILE", "FILE_TOO_LARGE", max_size=max_size_mb)
             )
     
     def save_uploaded_file(self, file: UploadFile) -> str:
@@ -76,20 +82,20 @@ class STTService:
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
             
-            logger.info(f"File saved: {file_path}")
+            logger.info(get_log_message("SERVICE", "FILE_SAVED", filepath=file_path))
             return file_path
             
         except Exception as e:
-            logger.error(f"Failed to save file: {e}")
-            raise HTTPException(status_code=500, detail=f"파일 저장 실패: {str(e)}")
+            logger.error(get_log_message("SERVICE", "FILE_SAVE_FAILED", error=str(e)))
+            raise FileProcessingException(get_error_message("FILE", "FILE_SAVE_FAILED"))
     
     def transcribe_audio(self, audio_path: str) -> Dict[str, Any]:
         """Transcribe audio file"""
         if not self.is_model_loaded():
-            raise HTTPException(status_code=500, detail="모델이 로드되지 않았습니다.")
+            raise ModelNotLoadedException()
         
         try:
-            logger.info(f"Transcribing audio: {audio_path}")
+            logger.info(get_log_message("SERVICE", "TRANSCRIPTION_STARTED", filepath=audio_path))
             segments, info = self.model.transcribe(audio_path)
             
             # Convert generator to list and combine all segments
@@ -103,21 +109,22 @@ class STTService:
                 "segments_count": len(segments_list)
             }
             
-            logger.info(f"Transcription completed. Language: {info.language}")
+            logger.info(get_log_message("SERVICE", "TRANSCRIPTION_COMPLETED", language=info.language))
             return result
             
         except Exception as e:
-            logger.error(f"Transcription failed: {e}")
-            raise HTTPException(status_code=500, detail=f"음성 변환 실패: {str(e)}")
+            logger.error(get_log_message("SERVICE", "TRANSCRIPTION_FAILED", error=str(e)))
+            raise TranscriptionException(get_error_message("MODEL", "TRANSCRIPTION_FAILED"))
     
     def cleanup_file(self, file_path: str) -> None:
         """Clean up temporary file"""
         try:
             if os.path.exists(file_path):
                 os.remove(file_path)
-                logger.info(f"File cleaned up: {file_path}")
+                logger.info(get_log_message("SERVICE", "FILE_CLEANED", filepath=file_path))
         except Exception as e:
-            logger.warning(f"Failed to cleanup file {file_path}: {e}")
+            logger.warning(get_log_message("SERVICE", "FILE_CLEANUP_FAILED", filepath=file_path, error=str(e)))
+            # 파일 정리 실패는 경고만 하고 예외를 발생시키지 않음
     
     async def process_audio_file(self, file: UploadFile) -> Dict[str, Any]:
         """Process uploaded audio file"""

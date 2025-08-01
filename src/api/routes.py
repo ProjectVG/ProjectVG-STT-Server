@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from src.services.stt_service import stt_service
 from src.core.config import settings
 from src.utils.logger import get_logger
+from src.utils.log_messages import get_log_message
 
 logger = get_logger(__name__)
 
@@ -24,14 +25,10 @@ async def health_check():
 @router.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...)):
     """Transcribe uploaded audio file"""
-    try:
-        logger.info(f"Received transcription request for file: {file.filename}")
-        result = await stt_service.process_audio_file(file)
-        logger.info("Transcription request completed successfully")
-        return result
-    except Exception as e:
-        logger.error(f"Transcription request failed: {e}")
-        raise
+    logger.info(get_log_message("API", "REQUEST_RECEIVED", filename=file.filename))
+    result = await stt_service.process_audio_file(file)
+    logger.info(get_log_message("API", "REQUEST_COMPLETED", filename=file.filename))
+    return result
 
 @router.get("/info")
 async def get_service_info():
