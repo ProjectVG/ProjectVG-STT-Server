@@ -1,6 +1,6 @@
-# Faster Whisper STT Server
+# FastAPI STT Server
 
-Faster Whisper를 사용한 음성-텍스트 변환(STT) 서버입니다.
+FastAPI와 Faster Whisper를 사용한 음성-텍스트 변환(STT) 서버입니다.
 
 ## 설치 방법
 
@@ -60,4 +60,6 @@ docker-compose build --no-cache
 
 - 음성 파일 업로드 및 텍스트 변환
 - 실시간 음성 인식 (향후 구현 예정)
-- REST API 제공 
+- REST API 제공 (FastAPI)
+- 자동 API 문서 생성 (/docs)
+- 비동기 처리 지원 
