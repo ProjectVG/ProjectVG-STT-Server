@@ -51,6 +51,11 @@ docker-compose down
 docker-compose build --no-cache
 ```
 
+## 포트 설정
+
+- **STT 서버**: http://localhost:7920
+- **웹 클라이언트**: http://localhost:3000
+
 ## 주요 기능
 
 - 음성 파일 업로드 및 텍스트 변환

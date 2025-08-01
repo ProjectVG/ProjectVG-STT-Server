@@ -14,6 +14,6 @@ COPY . .
 
 RUN mkdir -p uploads
 
-EXPOSE 5000
+EXPOSE 7920
 
 CMD ["python", "app.py"] 

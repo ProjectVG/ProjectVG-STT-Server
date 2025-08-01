@@ -2,7 +2,7 @@ services:
   stt-server:
     build: .
     ports:
-      - "5000:5000"
+      - "7920:7920"
     volumes:
       - ./uploads:/app/uploads
       - ./.env:/app/.env
