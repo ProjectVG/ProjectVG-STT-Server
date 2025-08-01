@@ -3,6 +3,7 @@ STT Service
 """
 import os
 import shutil
+import time
 from typing import Dict, Any, Optional
 from fastapi import UploadFile
 from faster_whisper import WhisperModel
@@ -128,6 +129,8 @@ class STTService:
     
     async def process_audio_file(self, file: UploadFile) -> Dict[str, Any]:
         """Process uploaded audio file"""
+        start_time = time.time()
+        
         # Validate file
         self.validate_file(file)
         
@@ -137,6 +140,18 @@ class STTService:
         try:
             # Transcribe audio
             result = self.transcribe_audio(file_path)
+            
+            # Add processing time
+            processing_time = time.time() - start_time
+            result["processing_time"] = round(processing_time, 3)
+            
+            # Add file info
+            result["file_info"] = {
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "size": getattr(file, 'size', None)
+            }
+            
             return result
         finally:
             # Cleanup file
