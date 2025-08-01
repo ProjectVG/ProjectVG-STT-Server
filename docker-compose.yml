@@ -1,0 +1,12 @@
+services:
+  stt-server:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./.env:/app/.env
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=True
+    restart: unless-stopped 
