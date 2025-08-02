@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     WHISPER_MODEL: str = Field(default="base", env="WHISPER_MODEL")
     WHISPER_DEVICE: str = Field(default="cpu", env="WHISPER_DEVICE")
     WHISPER_COMPUTE_TYPE: str = Field(default="float32", env="WHISPER_COMPUTE_TYPE")
+    WHISPER_LANGUAGE: Optional[str] = Field(default=None, env="WHISPER_LANGUAGE")
     
     # CORS Settings
     CORS_ORIGINS: list = Field(default=["*"], env="CORS_ORIGINS")

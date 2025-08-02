@@ -21,7 +21,25 @@
         input[type="file"], input[type="text"] { margin: 10px 0; padding: 5px; }
         button { padding: 10px 20px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
         button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        button.recording { background-color: #dc3545; }
+        button.recording:hover { background-color: #c82333; }
         #result { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; white-space: pre-wrap; }
+        .recording-status { 
+            display: inline-block; 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%; 
+            background-color: #dc3545; 
+            margin-right: 8px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .recording-time { font-weight: bold; color: #dc3545; }
     </style>
 </head>
 <body>
@@ -36,7 +54,51 @@
         </div>
         
         <div class="section">
+            <h3>마이크 녹음</h3>
+            <div id="recordingStatus" style="display: none;">
+                <span class="recording-status"></span>
+                <span class="recording-time" id="recordingTime">00:00</span>
+                <span>녹음 중...</span>
+            </div>
+            <div style="margin: 10px 0;">
+                <label for="recordingLanguage">언어 선택:</label>
+                <select id="recordingLanguage" style="margin-left: 10px; padding: 5px;">
+                    <option value="">자동 감지</option>
+                    <option value="ko">한국어</option>
+                    <option value="en">영어</option>
+                    <option value="ja">일본어</option>
+                    <option value="zh">중국어</option>
+                    <option value="es">스페인어</option>
+                    <option value="fr">프랑스어</option>
+                    <option value="de">독일어</option>
+                    <option value="it">이탈리아어</option>
+                    <option value="pt">포르투갈어</option>
+                    <option value="ru">러시아어</option>
+                </select>
+            </div>
+            <button id="recordButton" onclick="toggleRecording()">녹음 시작</button>
+            <button id="sendRecordingButton" onclick="sendRecording()" disabled>녹음 전송</button>
+            <audio id="recordedAudio" controls style="display: none; margin-top: 10px; width: 100%;"></audio>
+        </div>
+        
+        <div class="section">
             <h3>음성 파일 업로드</h3>
+            <div style="margin: 10px 0;">
+                <label for="uploadLanguage">언어 선택:</label>
+                <select id="uploadLanguage" style="margin-left: 10px; padding: 5px;">
+                    <option value="">자동 감지</option>
+                    <option value="ko">한국어</option>
+                    <option value="en">영어</option>
+                    <option value="ja">일본어</option>
+                    <option value="zh">중국어</option>
+                    <option value="es">스페인어</option>
+                    <option value="fr">프랑스어</option>
+                    <option value="de">독일어</option>
+                    <option value="it">이탈리아어</option>
+                    <option value="pt">포르투갈어</option>
+                    <option value="ru">러시아어</option>
+                </select>
+            </div>
             <input type="file" id="audioFile" accept=".wav,.mp3,.m4a,.flac,.ogg">
             <button onclick="transcribeFile()">음성 변환</button>
         </div>
@@ -54,30 +116,149 @@
     </div>
     
     <script>
-        function checkServer() {
-            const statusDiv = document.getElementById('serverStatus');
-            statusDiv.textContent = '확인 중...';
-            statusDiv.className = 'status';
-            
-            fetch('http://localhost:7920/api/v1/health')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'healthy') {
-                        const statusText = 
-                            '서버 연결됨\n' +
-                            '   모델 상태: ' + (data.model_loaded ? '로드됨' : '로드 안됨') + '\n' +
-                            '   서비스: ' + (data.service || 'N/A') + '\n' +
-                            '   응답 시간: ' + (data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A');
-                        statusDiv.textContent = statusText;
-                        statusDiv.className = 'status success';
-                    } else {
-                        statusDiv.textContent = '서버 상태 이상';
-                        statusDiv.className = 'status error';
-                    }
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingStartTime;
+        let recordingTimer;
+        let isRecording = false;
+        
+        function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+        
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audioElement = document.getElementById('recordedAudio');
+                        audioElement.src = audioUrl;
+                        audioElement.style.display = 'block';
+                        
+                        document.getElementById('sendRecordingButton').disabled = false;
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    
+                    // UI 업데이트
+                    const recordButton = document.getElementById('recordButton');
+                    recordButton.textContent = '녹음 중지';
+                    recordButton.className = 'recording';
+                    recordButton.disabled = false;
+                    
+                    document.getElementById('recordingStatus').style.display = 'block';
+                    document.getElementById('sendRecordingButton').disabled = true;
+                    
+                    // 녹음 시간 타이머 시작
+                    recordingStartTime = Date.now();
+                    recordingTimer = setInterval(updateRecordingTime, 1000);
                 })
                 .catch(error => {
-                    statusDiv.textContent = '서버 연결 실패\n   오류: ' + error.message;
-                    statusDiv.className = 'status error';
+                    alert('마이크 접근 권한이 필요합니다: ' + error.message);
+                });
+        }
+        
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                
+                // UI 업데이트
+                const recordButton = document.getElementById('recordButton');
+                recordButton.textContent = '녹음 시작';
+                recordButton.className = '';
+                recordButton.disabled = false;
+                
+                document.getElementById('recordingStatus').style.display = 'none';
+                
+                // 타이머 정지
+                clearInterval(recordingTimer);
+            }
+        }
+        
+        function updateRecordingTime() {
+            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('recordingTime').textContent = `${minutes}:${seconds}`;
+        }
+        
+        function sendRecording() {
+            const audioElement = document.getElementById('recordedAudio');
+            if (!audioElement.src) {
+                alert('녹음된 오디오가 없습니다.');
+                return;
+            }
+            
+            const language = document.getElementById('recordingLanguage').value;
+            
+            // Blob URL에서 Blob 객체 가져오기
+            fetch(audioElement.src)
+                .then(response => response.blob())
+                .then(blob => {
+                    const formData = new FormData();
+                    formData.append('file', blob, 'recording.wav');
+                    
+                    document.getElementById('result').textContent = '변환 중...';
+                    
+                    // 언어 파라미터가 있으면 URL에 추가
+                    let url = 'http://localhost:7920/api/v1/transcribe';
+                    if (language) {
+                        url += `?language=${encodeURIComponent(language)}`;
+                    }
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            document.getElementById('result').textContent = '오류: ' + data.error;
+                        } else {
+                            let resultText = 
+                                '변환 결과\n' +
+                                '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+                                '텍스트:\n' + (data.text || 'N/A') + '\n\n' +
+                                '언어: ' + (data.language || 'N/A') + '\n' +
+                                '언어 감지 확률: ' + (data.language_probability ? (data.language_probability * 100).toFixed(1) + '%' : 'N/A') + '\n' +
+                                '세그먼트 개수: ' + (data.segments_count || 'N/A') + '\n' +
+                                '처리 시간: ' + (data.processing_time ? data.processing_time + '초' : 'N/A') + '\n';
+                            
+                            // 파일 정보가 있으면 추가
+                            if (data.file_info) {
+                                resultText += '\n파일 정보:\n';
+                                resultText += '   파일명: ' + (data.file_info.filename || 'N/A') + '\n';
+                                resultText += '   타입: ' + (data.file_info.content_type || 'N/A') + '\n';
+                                if (data.file_info.size) {
+                                    const sizeMB = (data.file_info.size / (1024 * 1024)).toFixed(2);
+                                    resultText += '   크기: ' + sizeMB + ' MB\n';
+                                }
+                            }
+                            
+                            document.getElementById('result').textContent = resultText;
+                        }
+                    })
+                    .catch(error => {
+                        document.getElementById('result').textContent = '오류: ' + error.message;
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('result').textContent = '오류: ' + error.message;
                 });
         }
         
@@ -90,12 +271,19 @@
                 return;
             }
             
+            const language = document.getElementById('uploadLanguage').value;
             const formData = new FormData();
             formData.append('file', file);
             
             document.getElementById('result').textContent = '변환 중...';
             
-            fetch('http://localhost:7920/api/v1/transcribe', {
+            // 언어 파라미터가 있으면 URL에 추가
+            let url = 'http://localhost:7920/api/v1/transcribe';
+            if (language) {
+                url += `?language=${encodeURIComponent(language)}`;
+            }
+            
+            fetch(url, {
                 method: 'POST',
                 body: formData
             })

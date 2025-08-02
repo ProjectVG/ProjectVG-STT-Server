@@ -90,14 +90,22 @@ class STTService:
             logger.error(get_log_message("SERVICE", "FILE_SAVE_FAILED", error=str(e)))
             raise FileProcessingException(get_error_message("FILE", "FILE_SAVE_FAILED"))
     
-    def transcribe_audio(self, audio_path: str) -> Dict[str, Any]:
+    def transcribe_audio(self, audio_path: str, language: Optional[str] = None) -> Dict[str, Any]:
         """Transcribe audio file"""
         if not self.is_model_loaded():
             raise ModelNotLoadedException()
         
         try:
             logger.info(get_log_message("SERVICE", "TRANSCRIPTION_STARTED", filepath=audio_path))
-            segments, info = self.model.transcribe(audio_path)
+            
+            # 언어 설정 (설정 파일의 기본값 또는 파라미터로 전달된 값)
+            target_language = language or settings.WHISPER_LANGUAGE
+            
+            if target_language:
+                logger.info(get_log_message("SERVICE", "LANGUAGE_SET", language=target_language))
+                segments, info = self.model.transcribe(audio_path, language=target_language)
+            else:
+                segments, info = self.model.transcribe(audio_path)
             
             # Convert generator to list and combine all segments
             segments_list = list(segments)
@@ -127,7 +135,7 @@ class STTService:
             logger.warning(get_log_message("SERVICE", "FILE_CLEANUP_FAILED", filepath=file_path, error=str(e)))
             # 파일 정리 실패는 경고만 하고 예외를 발생시키지 않음
     
-    async def process_audio_file(self, file: UploadFile) -> Dict[str, Any]:
+    async def process_audio_file(self, file: UploadFile, language: Optional[str] = None) -> Dict[str, Any]:
         """Process uploaded audio file"""
         start_time = time.time()
         
@@ -139,7 +147,7 @@ class STTService:
         
         try:
             # Transcribe audio
-            result = self.transcribe_audio(file_path)
+            result = self.transcribe_audio(file_path, language)
             
             # Add processing time
             processing_time = time.time() - start_time

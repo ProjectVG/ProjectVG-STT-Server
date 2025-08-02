@@ -1,7 +1,8 @@
 """
 API Routes
 """
-from fastapi import APIRouter, File, UploadFile, Depends
+from typing import Optional
+from fastapi import APIRouter, File, UploadFile, Depends, Query
 from fastapi.responses import JSONResponse
 from src.services.stt_service import stt_service
 from src.core.config import settings
@@ -26,10 +27,13 @@ async def health_check():
     )
 
 @router.post("/transcribe", response_model=TranscriptionResponse)
-async def transcribe_audio(file: UploadFile = File(...)):
+async def transcribe_audio(
+    file: UploadFile = File(...),
+    language: Optional[str] = Query(None, description="언어 코드 (예: ko, en, ja, zh 등)")
+):
     """Transcribe uploaded audio file"""
     logger.info(get_log_message("API", "REQUEST_RECEIVED", filename=file.filename))
-    result = await stt_service.process_audio_file(file)
+    result = await stt_service.process_audio_file(file, language)
     logger.info(get_log_message("API", "REQUEST_COMPLETED", filename=file.filename))
     return TranscriptionResponse(**result)
 
