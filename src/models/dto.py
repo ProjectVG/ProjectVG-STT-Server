@@ -1,16 +1,10 @@
 """
-Data Transfer Objects (DTOs)
+DTO 모듈 통합 import
 """
-from src.models.requests import TranscribeRequest
-from src.models.responses import (
-    TranscriptionResponse, HealthResponse, ServiceInfoResponse,
-    ErrorResponse, APIResponse, SuccessResponse, ErrorAPIResponse,
-    TranscriptionSegment
+from .responses import (
+    TranscriptionResponse, HealthResponse, ServiceInfoResponse, ErrorResponse
 )
 
 __all__ = [
-    "TranscribeRequest",
-    "TranscriptionResponse", "HealthResponse", "ServiceInfoResponse",
-    "ErrorResponse", "APIResponse", "SuccessResponse", "ErrorAPIResponse",
-    "TranscriptionSegment"
+    "TranscriptionResponse", "HealthResponse", "ServiceInfoResponse", "ErrorResponse"
 ] 

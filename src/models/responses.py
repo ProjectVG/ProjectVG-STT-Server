@@ -41,17 +41,4 @@ class ErrorResponse(BaseModel):
     status_code: int = Field(...)
     type: str = Field(...)
     details: Optional[Dict[str, Any]] = Field(None)
-    timestamp: datetime = Field(default_factory=datetime.now)
-
-class APIResponse(BaseModel):
-    success: bool = Field(...)
-    data: Optional[Dict[str, Any]] = Field(None)
-    message: Optional[str] = Field(None)
-    timestamp: datetime = Field(default_factory=datetime.now)
-
-class SuccessResponse(APIResponse):
-    success: bool = Field(default=True)
-
-class ErrorAPIResponse(APIResponse):
-    success: bool = Field(default=False)
-    error: Optional[str] = Field(None) 
+    timestamp: datetime = Field(default_factory=datetime.now) 
