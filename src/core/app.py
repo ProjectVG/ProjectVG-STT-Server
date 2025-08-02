@@ -18,11 +18,75 @@ def create_app() -> FastAPI:
     
     # Create FastAPI app
     app = FastAPI(
-        title="STT Server",
-        description="FastAPI-based Speech-to-Text Server using Faster Whisper",
+        title="STT Server API",
+        description="""
+        FastAPI 기반 음성-텍스트 변환(STT) 서버입니다.
+        
+        ## 주요 기능
+        
+        * **음성 변환**: 음성 파일을 텍스트로 변환
+        * **언어 감지**: 자동 언어 감지 및 고정 언어 설정
+        * **다양한 형식 지원**: WAV, MP3, M4A, FLAC, OGG
+        * **실시간 처리**: 비동기 처리로 빠른 응답
+        
+        ## 사용 방법
+        
+        1. **서버 상태 확인**: `GET /api/v1/health`
+        2. **음성 변환**: `POST /api/v1/transcribe`
+        3. **서비스 정보**: `GET /api/v1/info`
+        
+        ## 지원 언어
+        
+        * `ko`: 한국어
+        * `en`: 영어
+        * `ja`: 일본어
+        * `zh`: 중국어
+        * `es`: 스페인어
+        * `fr`: 프랑스어
+        * `de`: 독일어
+        * `it`: 이탈리아어
+        * `pt`: 포르투갈어
+        * `ru`: 러시아어
+        
+        ## 기술 스택
+        
+        * **Backend**: FastAPI, Uvicorn
+        * **STT Engine**: Faster Whisper
+        * **Language**: Python 3.11
+        * **Container**: Docker & Docker Compose
+        """,
         version="1.0.0",
+        contact={
+            "name": "STT Server Team",
+            "email": "support@stt-server.com",
+        },
+        license_info={
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT",
+        },
         docs_url="/docs",
-        redoc_url="/redoc"
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
+        servers=[
+            {
+                "url": "http://localhost:7920",
+                "description": "개발 서버"
+            },
+            {
+                "url": "https://api.stt-server.com",
+                "description": "프로덕션 서버"
+            }
+        ],
+        tags_metadata=[
+            {
+                "name": "STT",
+                "description": "음성-텍스트 변환 관련 API",
+                "externalDocs": {
+                    "description": "Whisper 모델 정보",
+                    "url": "https://github.com/guillaumekln/faster-whisper",
+                },
+            },
+        ]
     )
     
     # Add CORS middleware
@@ -38,23 +102,42 @@ def create_app() -> FastAPI:
     app.include_router(router)
     
     # Root endpoint
-    @app.get("/")
+    @app.get("/", tags=["Root"])
     async def root():
+        """
+        루트 엔드포인트
+        
+        서버가 정상적으로 실행 중인지 확인하고 API 문서 링크를 제공합니다.
+        """
         return {
             "message": "STT Server is running",
+            "version": "1.0.0",
             "docs": "/docs",
-            "health": "/api/v1/health"
+            "redoc": "/redoc",
+            "health": "/api/v1/health",
+            "info": "/api/v1/info"
         }
     
     # Health check endpoint (legacy)
-    @app.get("/health")
+    @app.get("/health", tags=["Legacy"])
     async def health_check():
+        """
+        레거시 헬스 체크 엔드포인트
+        
+        이전 버전과의 호환성을 위해 제공됩니다.
+        새로운 API는 `/api/v1/health`를 사용하세요.
+        """
         return {"status": "healthy"}
     
     # Legacy transcribe endpoint for backward compatibility
-    @app.post("/transcribe")
+    @app.post("/transcribe", tags=["Legacy"])
     async def legacy_transcribe(file: UploadFile = File(...)):
-        """Legacy transcribe endpoint for backward compatibility"""
+        """
+        레거시 음성 변환 엔드포인트
+        
+        이전 버전과의 호환성을 위해 제공됩니다.
+        새로운 API는 `/api/v1/transcribe`를 사용하세요.
+        """
         logger.info(get_log_message("API", "REQUEST_RECEIVED", filename=file.filename))
         result = await stt_service.process_audio_file(file)
         logger.info(get_log_message("API", "REQUEST_COMPLETED", filename=file.filename))

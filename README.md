@@ -1,8 +1,88 @@
-# FastAPI STT Server
+# STT Server
 
 FastAPI와 Faster Whisper를 사용한 음성-텍스트 변환(STT) 서버입니다.
 
-## 설치 방법
+## 🚀 빠른 시작
+
+### 1. 서버 실행
+```bash
+# Docker 사용 (권장)
+docker-compose up -d
+
+# 로컬 실행
+python app.py
+```
+
+### 2. API 테스트
+```bash
+# 서버 상태 확인
+curl http://localhost:7920/api/v1/health
+
+# 음성 변환
+curl -X POST "http://localhost:7920/api/v1/transcribe" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@recording.wav"
+```
+
+### 3. 웹 클라이언트
+```bash
+cd client
+python run_web.py
+```
+브라우저에서 http://localhost:3000 접속
+
+## 📚 주요 기능
+
+- ✅ **음성-텍스트 변환**: Whisper 모델 기반
+- ✅ **다국어 지원**: 10개 언어 지원
+- ✅ **언어 고정**: 특정 언어로 강제 지정
+- ✅ **실시간 처리**: 비동기 처리
+- ✅ **REST API**: FastAPI 기반
+- ✅ **자동 문서화**: Swagger/ReDoc
+- ✅ **Docker 지원**: 컨테이너화
+- ✅ **웹 클라이언트**: 테스트용 UI
+
+## 🛠️ 기술 스택
+
+- **Backend**: FastAPI, Uvicorn
+- **STT Engine**: Faster Whisper
+- **Language**: Python 3.11
+- **Container**: Docker & Docker Compose
+- **Documentation**: Swagger UI, ReDoc
+
+## 🌍 지원 언어
+
+| 언어 코드 | 언어명 | 언어 코드 | 언어명 |
+|-----------|--------|-----------|--------|
+| `ko` | 한국어 | `es` | 스페인어 |
+| `en` | 영어 | `fr` | 프랑스어 |
+| `ja` | 일본어 | `de` | 독일어 |
+| `zh` | 중국어 | `it` | 이탈리아어 |
+| | | `pt` | 포르투갈어 |
+| | | `ru` | 러시아어 |
+
+## 📁 지원 파일 형식
+
+- **WAV** (`.wav`)
+- **MP3** (`.mp3`)
+- **M4A** (`.m4a`)
+- **FLAC** (`.flac`)
+- **OGG** (`.ogg`)
+
+## 📖 문서
+
+### 📚 API 문서
+- **[docs/API_DOCUMENTATION.md](./docs/API_DOCUMENTATION.md)** - 완전한 API 문서
+- **실시간 문서**: 
+  - [Swagger UI](http://localhost:7920/docs) - 대화형 API 문서
+  - [ReDoc](http://localhost:7920/redoc) - 대안 문서 뷰어
+  - [OpenAPI 스펙](http://localhost:7920/openapi.json) - OpenAPI 3.0 스펙
+
+### 🚀 사용 가이드
+- **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - 배포 가이드
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - 시스템 아키텍처
+
+## 🔧 설치 방법
 
 ### Docker 사용 (권장)
 
@@ -35,7 +115,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-## Docker 명령어
+## 🐳 Docker 명령어
 
 ```bash
 # 서버 실행
@@ -51,44 +131,66 @@ docker-compose down
 docker-compose build --no-cache
 ```
 
-## 포트 설정
+## 🔌 포트 설정
 
 - **STT 서버**: http://localhost:7920
 - **웹 클라이언트**: http://localhost:3000
 
-## 주요 기능
+## 🌐 API 엔드포인트
 
-- 음성 파일 업로드 및 텍스트 변환
-- 실시간 음성 인식 (향후 구현 예정)
-- REST API 제공 (FastAPI)
-- 자동 API 문서 생성 (/docs)
-- 비동기 처리 지원
-- **언어 고정 기능**: 특정 언어로 음성 인식 강제 지정
+- `GET /api/v1/health` - 서버 상태 확인
+- `POST /api/v1/transcribe` - 음성 변환
+- `GET /api/v1/info` - 서비스 정보
 
-## 언어 설정
+## ⚙️ 환경 변수
 
-### 환경 변수로 설정
-`.env` 파일에서 기본 언어를 설정할 수 있습니다:
-```bash
-WHISPER_LANGUAGE=ko  # 한국어로 고정
+| 변수명 | 기본값 | 설명 |
+|--------|--------|------|
+| `HOST` | `0.0.0.0` | 서버 호스트 |
+| `PORT` | `7920` | 서버 포트 |
+| `WHISPER_MODEL` | `base` | Whisper 모델 크기 |
+| `WHISPER_DEVICE` | `cpu` | 처리 디바이스 |
+| `WHISPER_LANGUAGE` | `None` | 기본 언어 (미설정 시 자동 감지) |
+| `MAX_FILE_SIZE` | `16777216` | 최대 파일 크기 (16MB) |
+
+## 📝 사용 예시
+
+### Python (requests)
+```python
+import requests
+
+# 음성 변환 (한국어 고정)
+with open("recording.wav", "rb") as f:
+    files = {"file": f}
+    response = requests.post(
+        "http://localhost:7920/api/v1/transcribe?language=ko", 
+        files=files
+    )
+    print(response.json())
 ```
 
-### API 호출 시 설정
-API 호출 시 쿼리 파라미터로 언어를 지정할 수 있습니다:
+### cURL
 ```bash
-POST /api/v1/transcribe?language=ko
+# 한국어로 고정하여 변환
+curl -X POST "http://localhost:7920/api/v1/transcribe?language=ko" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@recording.wav"
 ```
 
-### 지원 언어
-- `ko`: 한국어
-- `en`: 영어
-- `ja`: 일본어
-- `zh`: 중국어
-- `es`: 스페인어
-- `fr`: 프랑스어
-- `de`: 독일어
-- `it`: 이탈리아어
-- `pt`: 포르투갈어
-- `ru`: 러시아어
+## 🤝 기여하기
 
-언어를 지정하지 않으면 자동으로 감지됩니다. 
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
+
+## 📞 문의 및 지원
+
+- **이슈 리포트**: GitHub Issues
+- **문서 개선**: Pull Request
+- **기술 문의**: 프로젝트 팀 
