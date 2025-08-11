@@ -8,7 +8,7 @@ import webbrowser
 import threading
 
 class STTWebClient:
-    def __init__(self, server_url="http://localhost:7920"):
+    def __init__(self, server_url="http://localhost:7926"):
         self.server_url = server_url
         self.server = None
         self.port = 3000

@@ -41,5 +41,5 @@ python run_web.py
 
 ## 주의사항
 
-1. STT 서버가 실행 중이어야 합니다 (http://localhost:7920)
+1. STT 서버가 실행 중이어야 합니다 (http://localhost:7926)
 2. 웹 브라우저가 필요합니다 

@@ -16,10 +16,10 @@ python app.py
 ### 2. API 테스트
 ```bash
 # 서버 상태 확인
-curl http://localhost:7920/api/v1/health
+curl http://localhost:7926/api/v1/health
 
 # 음성 변환
-curl -X POST "http://localhost:7920/api/v1/transcribe" \
+curl -X POST "http://localhost:7926/api/v1/transcribe" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@recording.wav"
 ```
@@ -72,15 +72,10 @@ python run_web.py
 ## 📖 문서
 
 ### 📚 API 문서
-- **[docs/API_DOCUMENTATION.md](./docs/API_DOCUMENTATION.md)** - 완전한 API 문서
 - **실시간 문서**: 
-  - [Swagger UI](http://localhost:7920/docs) - 대화형 API 문서
-  - [ReDoc](http://localhost:7920/redoc) - 대안 문서 뷰어
-  - [OpenAPI 스펙](http://localhost:7920/openapi.json) - OpenAPI 3.0 스펙
-
-### 🚀 사용 가이드
-- **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - 배포 가이드
-- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - 시스템 아키텍처
+  - [Swagger UI](http://localhost:7926/docs) - 대화형 API 문서
+- [ReDoc](http://localhost:7926/redoc) - 대안 문서 뷰어
+- [OpenAPI 스펙](http://localhost:7926/openapi.json) - OpenAPI 3.0 스펙
 
 ## 🔧 설치 방법
 
@@ -133,7 +128,7 @@ docker-compose build --no-cache
 
 ## 🔌 포트 설정
 
-- **STT 서버**: http://localhost:7920
+- **STT 서버**: http://localhost:7926 (설정 파일에서 변경 가능)
 - **웹 클라이언트**: http://localhost:3000
 
 ## 🌐 API 엔드포인트
@@ -147,7 +142,7 @@ docker-compose build --no-cache
 | 변수명 | 기본값 | 설명 |
 |--------|--------|------|
 | `HOST` | `0.0.0.0` | 서버 호스트 |
-| `PORT` | `7920` | 서버 포트 |
+| `PORT` | `7926` | 서버 포트 |
 | `WHISPER_MODEL` | `base` | Whisper 모델 크기 |
 | `WHISPER_DEVICE` | `cpu` | 처리 디바이스 |
 | `WHISPER_LANGUAGE` | `None` | 기본 언어 (미설정 시 자동 감지) |
@@ -163,7 +158,7 @@ import requests
 with open("recording.wav", "rb") as f:
     files = {"file": f}
     response = requests.post(
-        "http://localhost:7920/api/v1/transcribe?language=ko", 
+        "http://localhost:7926/api/v1/transcribe?language=ko", 
         files=files
     )
     print(response.json())
@@ -172,7 +167,7 @@ with open("recording.wav", "rb") as f:
 ### cURL
 ```bash
 # 한국어로 고정하여 변환
-curl -X POST "http://localhost:7920/api/v1/transcribe?language=ko" \
+curl -X POST "http://localhost:7926/api/v1/transcribe?language=ko" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@recording.wav"
 ```
