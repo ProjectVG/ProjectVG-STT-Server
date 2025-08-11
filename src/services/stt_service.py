@@ -103,9 +103,22 @@ class STTService:
             
             if target_language:
                 logger.info(get_log_message("SERVICE", "LANGUAGE_SET", language=target_language))
-                segments, info = self.model.transcribe(audio_path, language=target_language)
+                # 언어를 강제로 고정하기 위해 추가 옵션 사용
+                segments, info = self.model.transcribe(
+                    audio_path, 
+                    language=target_language,
+                    task="transcribe",  # 명시적으로 변환 작업 지정
+                    beam_size=5,  # 더 정확한 변환을 위해 빔 크기 증가
+                    condition_on_previous_text=False,  # 이전 텍스트에 의존하지 않음
+                    temperature=0.0  # 결정적 변환을 위해 온도 0으로 설정
+                )
+                # 언어가 고정되었으므로 결과의 언어 정보를 고정된 언어로 설정
+                detected_language = target_language
+                language_probability = 1.0  # 고정된 언어이므로 확률을 1.0으로 설정
             else:
                 segments, info = self.model.transcribe(audio_path)
+                detected_language = info.language
+                language_probability = info.language_probability
             
             # Convert generator to list and combine all segments
             segments_list = list(segments)
@@ -113,12 +126,13 @@ class STTService:
             
             result = {
                 "text": text,
-                "language": info.language,
-                "language_probability": info.language_probability,
+                "language": detected_language,
+                "language_probability": language_probability,
                 "segments_count": len(segments_list)
             }
             
-            logger.info(get_log_message("SERVICE", "TRANSCRIPTION_COMPLETED", language=info.language))
+            logger.info(get_log_message("SERVICE", "TRANSCRIPTION_COMPLETED", language=detected_language))
+            logger.info(f"변환 결과 텍스트: '{text}'")
             return result
             
         except Exception as e:

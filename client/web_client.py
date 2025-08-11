@@ -62,7 +62,7 @@ class STTWebClient:
                     with open(file_path, 'rb') as audio_file:
                         files = {'file': audio_file}
                         response = requests.post(
-                            f"{self.server_url}/transcribe",
+                            f"{self.server_url}/api/v1/stt/transcribe",
                             files=files
                         )
                         

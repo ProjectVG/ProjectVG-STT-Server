@@ -1,7 +1,8 @@
 """
 FastAPI Application Factory
 """
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Query
+from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from src.core.config import settings
@@ -32,7 +33,7 @@ def create_app() -> FastAPI:
         ## 사용 방법
         
         1. **서버 상태 확인**: `GET /api/v1/health`
-        2. **음성 변환**: `POST /api/v1/transcribe`
+        2. **음성 변환**: `POST /api/v1/stt/transcribe`
         3. **서비스 정보**: `GET /api/v1/info`
         
         ## 지원 언어
@@ -114,8 +115,8 @@ def create_app() -> FastAPI:
             "version": "1.0.0",
             "docs": "/docs",
             "redoc": "/redoc",
-            "health": "/api/v1/health",
-            "info": "/api/v1/info"
+            "health": "/api/v1/stt/health",
+            "info": "/api/v1/stt/info"
         }
     
     # Health check endpoint (legacy)
@@ -125,22 +126,26 @@ def create_app() -> FastAPI:
         레거시 헬스 체크 엔드포인트
         
         이전 버전과의 호환성을 위해 제공됩니다.
-        새로운 API는 `/api/v1/health`를 사용하세요.
+        새로운 API는 `/api/v1/stt/health`를 사용하세요.
         """
         return {"status": "healthy"}
     
-    # Legacy transcribe endpoint for backward compatibility
+    # Legacy transcribe endpoint for nginx compatibility
     @app.post("/transcribe", tags=["Legacy"])
-    async def legacy_transcribe(file: UploadFile = File(...)):
+    async def legacy_transcribe(
+        file: UploadFile = File(...),
+        language: Optional[str] = Query(None, description="언어 코드")
+    ):
         """
-        레거시 음성 변환 엔드포인트
+        레거시 음성 변환 엔드포인트 (nginx 호환성)
         
-        이전 버전과의 호환성을 위해 제공됩니다.
-        새로운 API는 `/api/v1/transcribe`를 사용하세요.
+        nginx에서 /api/v1/stt/transcribe를 /transcribe로 변환하여 전달하므로
+        호환성을 위해 제공됩니다.
         """
         logger.info(get_log_message("API", "REQUEST_RECEIVED", filename=file.filename))
-        result = await stt_service.process_audio_file(file)
+        result = await stt_service.process_audio_file(file, language)
         logger.info(get_log_message("API", "REQUEST_COMPLETED", filename=file.filename))
+        logger.info(f"레거시 API 응답 결과 - 텍스트: '{result.get('text', 'N/A')}', 언어: '{result.get('language', 'N/A')}'")
         return result
     
     # Register exception handlers

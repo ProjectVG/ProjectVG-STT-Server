@@ -16,10 +16,10 @@ python app.py
 ### 2. API 테스트
 ```bash
 # 서버 상태 확인
-curl http://localhost:7926/api/v1/health
+curl http://localhost:7926/api/v1/stt/health
 
 # 음성 변환
-curl -X POST "http://localhost:7926/api/v1/transcribe" \
+curl -X POST "http://localhost:7926/api/v1/stt/transcribe" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@recording.wav"
 ```
@@ -134,7 +134,7 @@ docker-compose build --no-cache
 ## 🌐 API 엔드포인트
 
 - `GET /api/v1/health` - 서버 상태 확인
-- `POST /api/v1/transcribe` - 음성 변환
+- `POST /api/v1/stt/transcribe` - 음성 변환
 - `GET /api/v1/info` - 서비스 정보
 
 ## ⚙️ 환경 변수
@@ -158,7 +158,7 @@ import requests
 with open("recording.wav", "rb") as f:
     files = {"file": f}
     response = requests.post(
-        "http://localhost:7926/api/v1/transcribe?language=ko", 
+        "http://localhost:7926/api/v1/stt/transcribe?language=ko", 
         files=files
     )
     print(response.json())
@@ -167,7 +167,7 @@ with open("recording.wav", "rb") as f:
 ### cURL
 ```bash
 # 한국어로 고정하여 변환
-curl -X POST "http://localhost:7926/api/v1/transcribe?language=ko" \
+curl -X POST "http://localhost:7926/api/v1/stt/transcribe?language=ko" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@recording.wav"
 ```

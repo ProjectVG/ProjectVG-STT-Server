@@ -15,7 +15,7 @@ from src.models.responses import (
 logger = get_logger(__name__)
 
 # Create router
-router = APIRouter(prefix="/api/v1", tags=["STT"])
+router = APIRouter(prefix="/api/v1/stt", tags=["STT"])
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -100,6 +100,7 @@ async def transcribe_audio(
     logger.info(get_log_message("API", "REQUEST_RECEIVED", filename=file.filename))
     result = await stt_service.process_audio_file(file, language)
     logger.info(get_log_message("API", "REQUEST_COMPLETED", filename=file.filename))
+    logger.info(f"API 응답 결과 - 텍스트: '{result.get('text', 'N/A')}', 언어: '{result.get('language', 'N/A')}'")
     return TranscriptionResponse(**result)
 
 @router.get("/info", response_model=ServiceInfoResponse)

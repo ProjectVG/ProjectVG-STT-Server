@@ -216,7 +216,7 @@
                     document.getElementById('result').textContent = '변환 중...';
                     
                     // 언어 파라미터가 있으면 URL에 추가
-                    let url = 'http://localhost:7920/api/v1/transcribe';
+                    let url = 'http://localhost:7926/api/v1/stt/transcribe';
                     if (language) {
                         url += `?language=${encodeURIComponent(language)}`;
                     }
@@ -278,7 +278,7 @@
             document.getElementById('result').textContent = '변환 중...';
             
             // 언어 파라미터가 있으면 URL에 추가
-            let url = 'http://localhost:7920/api/v1/transcribe';
+            let url = 'http://localhost:7926/api/v1/stt/transcribe';
             if (language) {
                 url += `?language=${encodeURIComponent(language)}`;
             }
@@ -374,7 +374,7 @@
             const statusDiv = document.getElementById('serverStatus');
             statusDiv.textContent = '서비스 정보 조회 중...';
             
-            fetch('http://localhost:7920/api/v1/info')
+            fetch('http://localhost:7926/api/v1/stt/info')
                 .then(response => response.json())
                 .then(data => {
                     let infoText = 
