@@ -1,12 +1,52 @@
+name: projectvg-stt-server
+
+volumes:
+  projectvg-stt-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_PATH:-../data}/logs/stt-server
+  projectvg-stt-uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_PATH:-../data}/uploads/stt-server
+  projectvg-stt-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_PATH:-../data}/cache/stt-server
+
 services:
   stt-server:
     build: .
     ports:
       - "7950:8080"
     volumes:
-      - ./uploads:/app/uploads
-      - ./.env:/app/.env
+      - projectvg-stt-logs:/app/logs
+      - projectvg-stt-uploads:/app/uploads
+      - projectvg-stt-cache:/app/cache
     environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=True
-    restart: unless-stopped 
+      # 글로벌 환경 설정
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG_MODE=${DEBUG_MODE:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      # Flask 환경 설정
+      - FLASK_ENV=${ENVIRONMENT:-development}
+      - FLASK_DEBUG=${DEBUG_MODE:-True}
+      # 로깅 설정
+      - LOG_FILE=/app/logs/app.log
+      # Whisper 설정
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
+      - WHISPER_DEVICE=${WHISPER_DEVICE:-cpu}
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-16777216}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3" 

@@ -1,3 +1,11 @@
+# ProjectVG STT Server .gitignore
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Python
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,6 +135,16 @@ dmypy.json
 .idea/
 *.swp
 *.swo
+
+# Data Directory (표준화된 데이터 구조)
+logs/
+cache/
+uploads/
+*.log
+
+# Docker (표준화된 정책)
+docker-compose.override.yml
+.dockerignore.local
 
 # OS
 .DS_Store
