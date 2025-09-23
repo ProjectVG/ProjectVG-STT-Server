@@ -15,7 +15,7 @@ from src.models.responses import (
 logger = get_logger(__name__)
 
 # Create router
-router = APIRouter(prefix="/api/v1/stt", tags=["STT"])
+router = APIRouter(prefix="/api/v1", tags=["STT"])
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
